@@ -24,9 +24,9 @@ public class Outtake extends SubsystemBase {
   public enum OuttakeMode {
     Hard_Stop(0),
     Stow(2.4),
-    L2_Coral(0),
+    L2_Coral(2.5),
     L3_Coral(0),
-    L4_Coral(3),
+    L4_Coral(6),
     Algae(21),
     Barge(0);
 
@@ -60,7 +60,7 @@ public class Outtake extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (hasAlgae) rollers.set(0.2);
+    if (hasAlgae) rollers.set(0.1);
   }
 
 
@@ -126,12 +126,33 @@ public class Outtake extends SubsystemBase {
       }
 
       public boolean isFinished() {
-        System.out.println(timer.get());
         return rollers.getVelocity().getValueAsDouble() < 1 && timer.get() > 2;
       }
 
       public void end(boolean interupted) {
         hasAlgae = true;
+      }
+    };
+  }
+
+  public Command scoreProcessor() {
+    return new Command() {
+      public void initialize() {
+        timer.reset();
+      }
+
+
+      public void execute() {
+        rollers.set(-0.3);
+      }
+
+      public boolean isFinished() {
+        return timer.get() > 2;
+      }
+
+      public void end(boolean interupted) {
+        hasAlgae = false;
+        rollers.set(0);
       }
     };
   }

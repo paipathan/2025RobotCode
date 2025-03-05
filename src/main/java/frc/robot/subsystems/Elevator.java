@@ -18,16 +18,16 @@ public class Elevator extends SubsystemBase {
         TalonFX left, right;
 
         public enum Position {
-                Stow(0),
-                L2_Coral(0),
-                L3_Coral(0),
-                L4_Coral(0),
-                High_Algae(0),
-                Low_Algae(0);
+                Stow(1),
+                L2_Coral(6),
+                L3_Coral(12),
+                L4_Coral(22),
+                High_Algae(13),
+                Low_Algae(9);
 
-                public int value;
+                public double value;
 
-                Position(int value) {
+                Position(double value) {
                         this.value = value;
                 }
         }
@@ -45,7 +45,6 @@ public class Elevator extends SubsystemBase {
 
                 config.MotionMagic.MotionMagicCruiseVelocity = 40;
                 config.MotionMagic.MotionMagicAcceleration = 60;
-
                 left.getConfigurator().apply(config);
         }
 
@@ -57,7 +56,7 @@ public class Elevator extends SubsystemBase {
                         }
                         
                         public boolean isFinished() {
-                                return true;
+                                return Math.abs(left.getPosition().getValueAsDouble() - position.value) <= 0.5;
                         }
                 };
         }

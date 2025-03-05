@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.nio.file.attribute.PosixFilePermission;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -17,7 +19,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Outtake;
+import frc.robot.subsystems.Elevator.Position;
 import frc.robot.subsystems.Outtake.OuttakeMode;
 
 public class RobotContainer {
@@ -25,6 +29,7 @@ public class RobotContainer {
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
     public Outtake outtake;
+    public Elevator elevator;
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -33,7 +38,6 @@ public class RobotContainer {
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
-    private final Telemetry logger = new Telemetry(MaxSpeed);
 
     private final CommandXboxController driver = new CommandXboxController(0);
 
@@ -41,6 +45,7 @@ public class RobotContainer {
 
     public RobotContainer() {
         outtake = new Outtake(30, 41, 32);
+        elevator = new Elevator(20, 21, "drivetrain");
         configureBindings();
     }
 
@@ -54,9 +59,9 @@ public class RobotContainer {
         );
 
         // driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        driver.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-        ));
+        // driver.b().whileTrue(drivetrain.applyRequest(() ->
+        //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+        // ));
 
         driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
@@ -65,27 +70,71 @@ public class RobotContainer {
 
         // driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        drivetrain.registerTelemetry(logger::telemeterize);
 
 
 
-        driver.leftBumper().onTrue(
-                outtake.setPosition(OuttakeMode.Hard_Stop).andThen(
-                outtake.runCoralIntake().andThen(
-                outtake.setPosition(OuttakeMode.Stow)
-            )
+        driver.leftBumper().onTrue( // INTAKE
+                outtake.setPosition(OuttakeMode.Stow).andThen(
+                    elevator.setPosition(Position.Stow).andThen(
+                    outtake.setPosition(OuttakeMode.Hard_Stop).andThen(
+                    outtake.runCoralIntake().andThen(
+                    outtake.setPosition(OuttakeMode.Stow)
+                )))
         ));
 
-        driver.rightBumper().onTrue(
-            outtake.setPosition(OuttakeMode.L4_Coral).andThen(
-                outtake.scoreCoral()
-            )
+        driver.rightBumper().onTrue( // SCORE
+            outtake.scoreCoral()
         );
 
 
 
-        driver.a().onTrue(outtake.setPosition(OuttakeMode.Algae).andThen(outtake.runAlgaeIntake()));
-        driver.b().onTrue(outtake.tempReset);
+        // driver.a().onTrue // PREP L2
+        // (outtake.setPosition(OuttakeMode.Stow).andThen(
+        //     elevator.setPosition(Position.L2_Coral).andThen(
+        //         outtake.setPosition(OuttakeMode.L2_Coral)
+        //     )
+        // ));
+
+
+        // driver.x().onTrue // PREP L3
+        // (outtake.setPosition(OuttakeMode.Stow).andThen(
+        //     elevator.setPosition(Position.L3_Coral).andThen(
+        //         outtake.setPosition(OuttakeMode.L2_Coral)
+        //     )
+        // ));
+
+        // driver.b().onTrue // PREP L4
+        // (outtake.setPosition(OuttakeMode.Stow).andThen(
+        //     elevator.setPosition(Position.L4_Coral).andThen(
+        //         outtake.setPosition(OuttakeMode.L2_Coral)
+        //     )
+        // ));
+
+        driver.a().onTrue( // CLEAN L2 ALGAE
+                outtake.setPosition(OuttakeMode.Stow).andThen(elevator.setPosition(Position.Low_Algae).andThen(
+                    outtake.setPosition(OuttakeMode.Algae).andThen(
+                    outtake.runAlgaeIntake()
+                ))
+        ));
+
+        driver.b().onTrue( // SCORE PROCESSOR
+            outtake.setPosition(OuttakeMode.Algae).andThen(
+                elevator.setPosition(Position.Stow).andThen(
+                outtake.scoreProcessor()))
+        );
+
+        driver.x().onTrue( // RESET ROBOT
+            outtake.setPosition(OuttakeMode.Stow).andThen(
+                elevator.setPosition(Position.Stow)));
+
+
+        
+
+
+
+
+
+        
     }
 
     public Command getAutonomousCommand() {
