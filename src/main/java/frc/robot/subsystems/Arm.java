@@ -25,9 +25,9 @@ public class Arm extends SubsystemBase {
         boolean hasAlgae;
 
         public enum Position {
-                Stow(2.4),
+                Stow(3.5),
                 
-                Intake_Coral(0),
+                Intake_Coral(-0.1),
                 Hold_Algae(21);
 
                 public double value;
@@ -47,16 +47,24 @@ public class Arm extends SubsystemBase {
                 config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
                 config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-                config.Slot0.kP = 30;
+                config.Slot0.kP = 10;
 
-                config.MotionMagic.MotionMagicCruiseVelocity = 50;
-                config.MotionMagic.MotionMagicAcceleration = 80;
+                config.MotionMagic.MotionMagicCruiseVelocity = 40;
+                config.MotionMagic.MotionMagicAcceleration = 60;
                 arm.getConfigurator().apply(config);
 
                 timer = new Timer();
                 timer.start();
 
                 hasAlgae = false;
+        }
+
+        public boolean hasCoral() {
+                return distance.getIsDetected(true).getValue();
+        }
+
+        public boolean hasAlgae() {
+                return hasAlgae;
         }
 
         public Command setPosition(Position position) {
@@ -78,7 +86,7 @@ public class Arm extends SubsystemBase {
                         }
 
                         public boolean isFinished() {
-                                return distance.getIsDetected(true).getValue();
+                                return hasCoral();
                         }
 
                         public void end(boolean interupted) {
@@ -114,7 +122,7 @@ public class Arm extends SubsystemBase {
                         }
 
                         public boolean isFinished() {
-                                return !distance.getIsDetected(true).getValue();
+                                return !hasCoral();
                         }
 
                         public void end(boolean interupted) {

@@ -19,14 +19,14 @@ public class Elevator extends SubsystemBase {
         TalonFX left, right;
 
         public enum Position {
-                Stow(1),
+                Stow(0),
 
                 L2_Coral(6),
                 L3_Coral(12),
                 L4_Coral(22),
 
                 Low_Algae(9),
-                High_Algae(17);
+                High_Algae(15);
 
                 public double value;
 
@@ -43,7 +43,7 @@ public class Elevator extends SubsystemBase {
                 config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
                 config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-                config.Slot0.kP = 5;
+                config.Slot0.kP = 2;
                 config.Slot0.kG = 0.6;
 
                 config.MotionMagic.MotionMagicCruiseVelocity = 40;
@@ -59,7 +59,7 @@ public class Elevator extends SubsystemBase {
                         }
                         
                         public boolean isFinished() {
-                                return Utilities.inTolerance(position.value - left.getPosition().getValueAsDouble(), 0.2);
+                                return Utilities.inTolerance(position.value - left.getPosition().getValueAsDouble(), 0.3);
                         }
                 };
         }

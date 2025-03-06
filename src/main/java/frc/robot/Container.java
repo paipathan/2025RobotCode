@@ -7,29 +7,27 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix.led.CANdle;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.ButtonBoard.Action;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Arm;
 
 public class Container {
-        CommandXboxController driverController;
-        ButtonBoard operatorBoard;
-
         Drivetrain drivetrain;
         Arm arm;
         Elevator elevator;
+        CANdle status;
 
         SwerveRequest.FieldCentric driveRequest;
 
         Mode mode;
-        Elevator.Position targetLevel;
+        Elevator.Position coralLevel;
+        Elevator.Position algaeLevel;
 
         double maxSpeed = TunerConstants.maxSpeed.in(MetersPerSecond);
         double maxRotation = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
@@ -40,90 +38,107 @@ public class Container {
         }
 
         public Container() {
-                driverController = new CommandXboxController(0);
-                operatorBoard = new ButtonBoard(1);
-
                 drivetrain = TunerConstants.createDrivetrain();
                 arm = new Arm(30, 41, 32);
                 elevator = new Elevator(20, 21, "drivetrain");
+                
+                status = new CANdle(55);
 
                 driveRequest = new SwerveRequest.FieldCentric()
                         .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxRotation * 0.1)
                         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
                 mode = Mode.Coral;
-                targetLevel = Elevator.Position.L2_Coral;
-
-                configureBindings();
+                coralLevel = Elevator.Position.L2_Coral;
+                algaeLevel = Elevator.Position.Low_Algae;
         }
 
-        void configureBindings() {
-                drivetrain.setDefaultCommand(
-                        drivetrain.applyRequest(() -> driveRequest
-                                .withVelocityX(-driverController.getLeftY() * maxSpeed * 0.2)
-                                .withVelocityY(-driverController.getLeftX() * maxSpeed * 0.2)
-                                .withRotationalRate(-driverController.getRightX() * maxRotation)
-                        )
+        public Mode getMode() {
+                return mode;
+        }
+
+        public Elevator.Position getCoralLevel() {
+                return coralLevel;
+        }
+
+        public Elevator.Position getAlgaeLevel() {
+                return algaeLevel;
+        }
+
+        public Command drive(double powerX, double powerY, double powerR) {
+                return drivetrain.applyRequest(() -> driveRequest
+                        .withVelocityX(-powerY * maxSpeed * 0.2)
+                        .withVelocityY(-powerX * maxSpeed * 0.2)
+                        .withRotationalRate(-powerR * maxRotation)
                 );
-                
-                // Set Mode
-                operatorBoard.onTrue(Action.Mode_Coral, new Command() {
+        }
+
+        public Command modeCoral() {
+                return new Command() {
                         public void initialize() {
                                 mode = Mode.Coral;
+                                status.setLEDs(255, 0, 255);
                         }
 
                         public boolean isFinished() {
                                 return true;
                         }
-                });
+                };
+        }
 
-                operatorBoard.onTrue(Action.Mode_Algae, new Command() {
+        public Command modeAlgae() {
+                return new Command() {
                         public void initialize() {
                                 mode = Mode.Algae;
+                                status.setLEDs(0, 255, 0);
                         }
 
                         public boolean isFinished() {
                                 return true;
                         }
-                });
+                };
+        }
 
-                // Set Target
-                operatorBoard.onTrue(Action.Target_Low, new Command() {
+        public Command targetLow() {
+                return new Command() {
                         public void initialize() {
-                                targetLevel = mode == Mode.Coral ? Elevator.Position.L2_Coral : Elevator.Position.Low_Algae;
+                                coralLevel = Elevator.Position.L2_Coral;
+                                algaeLevel = Elevator.Position.Low_Algae;
                         }
 
                         public boolean isFinished() {
                                 return true;
                         }
-                });
-
-                operatorBoard.onTrue(Action.Target_Medium, new Command() {
+                };
+        }
+        
+        public Command targetMedium() {
+                return new Command() {
                         public void initialize() {
-                                if (mode == Mode.Coral) targetLevel = Elevator.Position.L3_Coral;
+                                coralLevel = Elevator.Position.L3_Coral;
                         }
 
                         public boolean isFinished() {
                                 return true;
                         }
-                });
+                };
+        }
 
-                operatorBoard.onTrue(Action.High, new Command() {
+        public Command targetHigh() {
+                return new Command() {
                         public void initialize() {
-                                targetLevel = mode == Mode.Coral ? Elevator.Position.L4_Coral : Elevator.Position.High_Algae;
+                                coralLevel = Elevator.Position.L4_Coral;
+                                algaeLevel = Elevator.Position.High_Algae;
                         }
 
                         public boolean isFinished() {
                                 return true;
                         }
-                });
+                };
+        }
 
-                driverController.a().onTrue(
-                        arm.reset()
-                );
-
-                // Intake
-                driverController.leftBumper().onTrue(Commands.sequence(
+        public Command runIntake() {
+                return Commands.sequence(
                         arm.setPosition(Arm.Position.Stow),
                         Commands.either(
                                 Commands.sequence(
@@ -136,7 +151,7 @@ public class Container {
                                 ),
 
                                 Commands.sequence(
-                                        elevator.setPosition(targetLevel),
+                                        elevator.setPosition(algaeLevel),
                                         Commands.parallel(
                                                 arm.setPosition(Arm.Position.Hold_Algae),
                                                 arm.intakeAlgae()
@@ -147,26 +162,42 @@ public class Container {
                                         return mode == Mode.Coral;
                                 }
                         )
-                ));
+                );
+        }
 
-                // Outtake
-                driverController.rightBumper().onTrue(Commands.either(
-                        Commands.sequence(
-                                arm.setPosition(Arm.Position.Stow),
-                                elevator.setPosition(targetLevel),
-                                arm.outtakeCoral(),
-                                elevator.setPosition(Elevator.Position.Stow)
+        public Command runOuttake() {
+                return Commands.either(
+                        Commands.either(
+                                Commands.sequence(
+                                        arm.setPosition(Arm.Position.Stow),
+                                        elevator.setPosition(coralLevel),
+                                        Commands.waitSeconds(0.5),
+                                        arm.outtakeCoral(),
+                                        elevator.setPosition(Elevator.Position.Stow)
+                                ),
+                                Commands.none(),
+
+                                () -> {
+                                        return arm.hasCoral();
+                                }
                         ),
+                        Commands.either(
+                                Commands.sequence(
+                                        arm.setPosition(Arm.Position.Hold_Algae),
+                                        elevator.setPosition(Elevator.Position.Stow),
+                                        arm.outtakeAlgae(),
+                                        arm.setPosition(Arm.Position.Stow)
+                                ),
+                                Commands.none(),
 
-                        Commands.sequence(
-                                arm.setPosition(Arm.Position.Hold_Algae),
-                                arm.outtakeAlgae(),
-                                arm.setPosition(Arm.Position.Stow)
+                                () -> {
+                                        return arm.hasAlgae();
+                                }
                         ),
 
                         () -> {
                                 return mode == Mode.Coral;
                         }      
-                ));
+                );
         }
 }

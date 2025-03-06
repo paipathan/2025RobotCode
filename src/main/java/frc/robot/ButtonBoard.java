@@ -4,11 +4,10 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj.XboxController;
 
 public class ButtonBoard {
-        CommandXboxController controller;
+        XboxController controller;
 
         public enum Action {
                 Mode_Coral(1),
@@ -16,7 +15,7 @@ public class ButtonBoard {
 
                 Target_Low(3),
                 Target_Medium(4),
-                High(5),
+                Target_High(5),
 
                 Align_Left(6),
                 Align_Right(7),
@@ -30,18 +29,18 @@ public class ButtonBoard {
         }
 
         public ButtonBoard(int port) {
-                controller = new CommandXboxController(port);
+                controller = new XboxController(port);
         }
 
-        public void onTrue(Action action, Command command) {
-                controller.button(action.value).onTrue(command);
+        public boolean getButtonPressed(Action action) {
+                return controller.getRawButtonPressed(action.value);
         }
 
-        public void onFalse(Action action, Command command) {
-                controller.button(action.value).onFalse(command);
+        public boolean getButtonReleased(Action action) {
+                return controller.getRawButtonReleased(action.value);
         }
 
-        public void whileTrue(Action action, Command command) {
-                controller.button(action.value).whileTrue(command);
+        public boolean getButton(Action action) {
+                return controller.getRawButton(action.value);
         }
 }
