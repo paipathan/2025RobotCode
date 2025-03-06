@@ -11,16 +11,16 @@ public class ButtonBoard {
         CommandXboxController controller;
 
         public enum Action {
-                Outtake_L2(0),
-                Outtake_L3(1),
-                Outtake_L4(2),
+                Mode_Coral(1),
+                Mode_Algae(2),
 
-                Intake_Reef(3),
-                Outtake_Processor(4),
+                Target_Low(3),
+                Target_Medium(4),
+                High(5),
 
-                Align_Left(5),
-                Align_Right(6),
-                Align_Center(7);
+                Align_Left(6),
+                Align_Right(7),
+                Align_Center(8);
 
                 public int value;
 
@@ -29,19 +29,19 @@ public class ButtonBoard {
                 }
         }
 
-        public ButtonBoard(int controllerID) {
-                controller = new CommandXboxController(controllerID);
+        public ButtonBoard(int port) {
+                controller = new CommandXboxController(port);
         }
 
-        public void buttonPressed(Action action, Command command) {
+        public void onTrue(Action action, Command command) {
                 controller.button(action.value).onTrue(command);
         }
 
-        public void buttonReleased(Action action, Command command) {
+        public void onFalse(Action action, Command command) {
                 controller.button(action.value).onFalse(command);
         }
 
-        public void button(Action action, Command command) {
+        public void whileTrue(Action action, Command command) {
                 controller.button(action.value).whileTrue(command);
         }
 }

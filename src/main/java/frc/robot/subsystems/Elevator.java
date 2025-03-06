@@ -13,17 +13,20 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Utilities;
 
 public class Elevator extends SubsystemBase {
         TalonFX left, right;
 
         public enum Position {
                 Stow(1),
+
                 L2_Coral(6),
                 L3_Coral(12),
                 L4_Coral(22),
-                High_Algae(13),
-                Low_Algae(9);
+
+                Low_Algae(9),
+                High_Algae(17);
 
                 public double value;
 
@@ -32,9 +35,9 @@ public class Elevator extends SubsystemBase {
                 }
         }
 
-        public Elevator(int leftID, int rightID, String bus) {
-                left = new TalonFX(leftID, bus);
-                right = new TalonFX(rightID, bus);
+        public Elevator(int leftID, int rightID, String canID) {
+                left = new TalonFX(leftID, canID);
+                right = new TalonFX(rightID, canID);
 
                 TalonFXConfiguration config = new TalonFXConfiguration();
                 config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -56,7 +59,7 @@ public class Elevator extends SubsystemBase {
                         }
                         
                         public boolean isFinished() {
-                                return Math.abs(left.getPosition().getValueAsDouble() - position.value) <= 0.5;
+                                return Utilities.inTolerance(position.value - left.getPosition().getValueAsDouble(), 0.2);
                         }
                 };
         }

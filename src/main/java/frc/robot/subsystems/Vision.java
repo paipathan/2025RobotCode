@@ -13,7 +13,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Utility;
+import frc.robot.Utilities;
 
 public class Vision extends SubsystemBase {
         AprilTagFieldLayout tagLayout;
@@ -70,7 +70,7 @@ public class Vision extends SubsystemBase {
 
         public Pose2d GetPose(Camera camera) {
                 estimator.setRobotToCameraTransform(GetOffset(camera));
-                return Utility.ToPose2d(estimator.update(GetCamera(camera).getAllUnreadResults().get(0)).get().estimatedPose);
+                return Utilities.toPose2d(estimator.update(GetCamera(camera).getAllUnreadResults().get(0)).get().estimatedPose);
         }
 
         @Override
