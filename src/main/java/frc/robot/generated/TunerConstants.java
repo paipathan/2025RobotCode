@@ -1,3 +1,7 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
 package frc.robot.generated;
 
 import static edu.wpi.first.units.Units.*;
@@ -45,7 +49,8 @@ public class TunerConstants {
         static Pigeon2Configuration pigeonConfigs = null;
 
         public static CANBus can = new CANBus("drivetrain");
-        public static LinearVelocity maxSpeed = MetersPerSecond.of(4.73);
+        public static double maxSpeed = 4.73;
+        public static double maxRotation = 4.71;
 
         static double coupleRatio = 3.5714285714285716;
         static double driveRatio = 6.746031746031747;

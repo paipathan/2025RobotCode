@@ -4,12 +4,9 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
-
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix.led.CANdle;
-import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.generated.TunerConstants;
@@ -23,14 +20,9 @@ public class Container {
         Elevator elevator;
         CANdle status;
 
-        SwerveRequest.FieldCentric driveRequest;
-
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
-
-        double maxSpeed = TunerConstants.maxSpeed.in(MetersPerSecond);
-        double maxRotation = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
         public enum Mode {
                 Coral,
@@ -43,10 +35,6 @@ public class Container {
                 elevator = new Elevator(20, 21, "drivetrain");
                 
                 status = new CANdle(55);
-
-                driveRequest = new SwerveRequest.FieldCentric()
-                        .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxRotation * 0.1)
-                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
                 mode = Mode.Coral;
                 coralLevel = Elevator.Position.L2_Coral;
@@ -63,14 +51,6 @@ public class Container {
 
         public Elevator.Position getAlgaeLevel() {
                 return algaeLevel;
-        }
-
-        public Command drive(double powerX, double powerY, double powerR) {
-                return drivetrain.applyRequest(() -> driveRequest
-                        .withVelocityX(-powerY * maxSpeed * 0.2)
-                        .withVelocityY(-powerX * maxSpeed * 0.2)
-                        .withRotationalRate(-powerR * maxRotation)
-                );
         }
 
         public Command modeCoral() {
@@ -137,6 +117,18 @@ public class Container {
                 };
         }
 
+        public Command drive(double leftX, double leftY, double rightX) {
+                ChassisSpeeds speeds = new ChassisSpeeds(-leftY * TunerConstants.maxSpeed, -leftX * TunerConstants.maxSpeed, -rightX * TunerConstants.maxRotation);
+                return drivetrain.driveRobotCentric(speeds);
+        }
+
+        public Command stow() {
+                return Commands.sequence(
+                        arm.setPosition(Arm.Position.Stow),
+                        elevator.setPosition(Elevator.Position.Stow)
+                );
+        }
+
         public Command runIntake() {
                 return Commands.sequence(
                         arm.setPosition(Arm.Position.Stow),
@@ -149,7 +141,6 @@ public class Container {
                                         ),
                                         arm.setPosition(Arm.Position.Stow)
                                 ),
-
                                 Commands.sequence(
                                         elevator.setPosition(algaeLevel),
                                         Commands.parallel(
@@ -158,9 +149,7 @@ public class Container {
                                         )
                                 ),
 
-                                () -> {
-                                        return mode == Mode.Coral;
-                                }
+                                () -> mode == Mode.Coral
                         )
                 );
         }
@@ -172,14 +161,11 @@ public class Container {
                                         arm.setPosition(Arm.Position.Stow),
                                         elevator.setPosition(coralLevel),
                                         Commands.waitSeconds(0.5),
-                                        arm.outtakeCoral(),
-                                        elevator.setPosition(Elevator.Position.Stow)
+                                        arm.outtakeCoral()
                                 ),
                                 Commands.none(),
 
-                                () -> {
-                                        return arm.hasCoral();
-                                }
+                                () -> arm.hasCoral()
                         ),
                         Commands.either(
                                 Commands.sequence(
@@ -190,14 +176,10 @@ public class Container {
                                 ),
                                 Commands.none(),
 
-                                () -> {
-                                        return arm.hasAlgae();
-                                }
+                                () -> arm.hasAlgae()
                         ),
 
-                        () -> {
-                                return mode == Mode.Coral;
-                        }      
+                        () -> mode == Mode.Coral
                 );
         }
 }

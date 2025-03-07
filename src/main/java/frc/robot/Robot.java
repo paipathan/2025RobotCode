@@ -51,7 +51,7 @@ public class Robot extends TimedRobot {
 
         @Override
         public void teleopPeriodic() {
-                container.drive(controller.getLeftX(), controller.getLeftY(), controller.getRightX()).schedule();
+                container.drive(controller.getLeftX(), controller.getLeftY(), controller.getRightX());
 
                 if (board.getButton(Action.Mode_Coral)) container.modeCoral().schedule();
                 if (board.getButton(Action.Mode_Algae)) container.modeAlgae().schedule();

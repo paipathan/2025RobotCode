@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Utilities {
@@ -17,6 +18,10 @@ public class Utilities {
                 D,
                 E,
                 F
+        }
+
+        public static Alliance getAlliance() {
+                return DriverStation.getAlliance().get();
         }
 
         public static Pose2d toPose2d(Pose3d pose) {
@@ -47,8 +52,8 @@ public class Utilities {
                 return closestPose;
         }
 
-        public static Side getClosestSide(Alliance alliance, Pose2d robotPose) {
-                Pose2d center = alliance == Alliance.Red ? new Pose2d() : new Pose2d();
+        public static Side getClosestSide(Pose2d robotPose) {
+                Pose2d center = getAlliance() == Alliance.Red ? new Pose2d() : new Pose2d();
                 double angle = Math.atan2(robotPose.getX() - center.getX(), robotPose.getY() - center.getY()) % 360;
 
                 if (angle > 300) return Side.B;
