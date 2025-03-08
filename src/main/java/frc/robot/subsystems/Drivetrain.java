@@ -23,8 +23,8 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.Utilities;
-import frc.robot.generated.TunerConstants;
-import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.generated.RobotConstants;
+import frc.robot.generated.RobotConstants.TunerSwerveDrivetrain;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         static Rotation2d redPerspective = Rotation2d.k180deg, bluePerspective = Rotation2d.kZero;
@@ -41,11 +41,11 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 super(drivetrainConfigs, modules);
 
                 fieldCentric = new SwerveRequest.FieldCentric()
-                        .withDeadband(TunerConstants.maxSpeed * 0.1).withRotationalDeadband(TunerConstants.maxRotation * 0.1)
+                        .withDeadband(RobotConstants.maxSpeed * 0.1).withRotationalDeadband(RobotConstants.maxRotation * 0.1)
                         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
                 robotCentric = new SwerveRequest.RobotCentric()
-                        .withDeadband(TunerConstants.maxSpeed * 0.1).withRotationalDeadband(TunerConstants.maxRotation * 0.1)
+                        .withDeadband(RobotConstants.maxSpeed * 0.1).withRotationalDeadband(RobotConstants.maxRotation * 0.1)
                         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
                 try {
@@ -94,8 +94,16 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 ));
         }
 
-        public Command driveToPose(Pose2d pose) {
-                return AutoBuilder.pathfindToPose(pose, new PathConstraints(TunerConstants.maxSpeed, 7.3, TunerConstants.maxRotation, 2171));
+        public Command driveToPose(Pose2d targetPose) {
+                return AutoBuilder.pathfindToPose(
+                                targetPose, 
+                                new PathConstraints(
+                                        RobotConstants.maxSpeed, 
+                                        RobotConstants.maxAcceleration, 
+                                        RobotConstants.maxRotation, 
+                                        RobotConstants.maxAngularAcceleration
+                                )
+                        );
         }
 
         @Override

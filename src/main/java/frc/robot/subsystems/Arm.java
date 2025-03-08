@@ -26,7 +26,7 @@ public class Arm extends SubsystemBase {
 
         public enum Position {
                 Stow(3.5),
-
+                L4_Coral(4.3),
                 Intake_Coral(-0.1),
                 Hold_Algae(21);
 
@@ -117,12 +117,16 @@ public class Arm extends SubsystemBase {
 
         public Command outtakeCoral() {
                 return new Command() {
+                        public void initialize() {
+                                timer.reset();
+                        }
+
                         public void execute() {
-                                rollers.set(-0.5);
+                                rollers.set(-0.8);
                         }
 
                         public boolean isFinished() {
-                                return !hasCoral();
+                                return !hasCoral() && timer.get() > 0.7;
                         }
 
                         public void end(boolean interupted) {
@@ -167,6 +171,6 @@ public class Arm extends SubsystemBase {
 
         @Override
         public void periodic() {
-                if (hasAlgae) rollers.set(0.1);
+                if (hasAlgae && !hasCoral()) rollers.set(0.1);
         }
 }

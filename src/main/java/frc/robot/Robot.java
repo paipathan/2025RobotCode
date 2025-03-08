@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.ButtonBoard.Action;
+import frc.robot.subsystems.Vision.Camera;
 
 public class Robot extends TimedRobot {
         XboxController controller;
@@ -54,12 +55,14 @@ public class Robot extends TimedRobot {
                 if (board.getButtonPressed(Action.Target_Medium)) container.targetMedium();
                 if (board.getButtonPressed(Action.Target_High)) container.targetHigh();
 
-                if (controller.getAButtonPressed()) container.cancel().schedule();
+                if (controller.getAButtonPressed()) container.stow().schedule();
 
                 if (controller.getLeftBumperButtonPressed()) container.runIntake().schedule();
                 if (controller.getRightBumperButtonPressed()) container.runOuttake().schedule();
+
+                if(controller.getXButtonPressed()) container.manualOuttake().schedule();
                 
-                container.getDrivetrain().addVisionMeasurement(null, Timer.getFPGATimestamp());
+                container.getDrivetrain().addVisionMeasurement(container.getVision().getPose(Camera.Front), Timer.getFPGATimestamp());               
         }
 
         @Override

@@ -32,7 +32,7 @@ public class Vision extends SubsystemBase {
                 Right
         }
 
-        public Vision(String frontID, String leftID, Transform3d leftOffset, String rightID, Transform3d rightOffset) {
+        public Vision(String frontID, String leftID, String rightID, Transform3d leftOffset, Transform3d rightOffset) {
                 this.frontID = frontID;
 
                 tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
@@ -65,8 +65,7 @@ public class Vision extends SubsystemBase {
 
         public Pose2d getPose(Camera camera) {
                 if (camera == Camera.Front) {
-                        Pose2d pose = Utilities.getAlliance() == Alliance.Red ? LimelightHelpers.getRedPose(frontID) : LimelightHelpers.getBluePose(frontID);
-                        return pose;
+                       return Utilities.getAlliance() == Alliance.Red ? LimelightHelpers.getRedPose(frontID) : LimelightHelpers.getBluePose(frontID);
                 }
 
                 estimator.setRobotToCameraTransform(getOffset(camera));

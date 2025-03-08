@@ -17,7 +17,20 @@ import edu.wpi.first.units.measure.*;
 
 import frc.robot.subsystems.Drivetrain;
 
-public class TunerConstants {
+public class RobotConstants {
+
+        //--ARM--//
+        public static final int armID = 30;
+        public static final int rollerID = 41;
+        public static final int distanceID = 32;
+
+        //--ELEVATOR--//
+        public static final int leftElevatorID = 20;
+        public static final int rightElevatorID = 21;
+        public static final String elevatorCANBus  = "drivetrain";
+        public static final int statusID = 55;
+
+        //--DRIVETRAIN--//
         static Slot0Configs driveGains = new Slot0Configs()
                 .withKP(0.1).withKI(0).withKD(0)
                 .withKS(0).withKV(0.124);
@@ -51,6 +64,8 @@ public class TunerConstants {
         public static CANBus can = new CANBus("drivetrain");
         public static double maxSpeed = 4.73;
         public static double maxRotation = 4.71;
+        public static double maxAcceleration = 7.3;
+        public static double maxAngularAcceleration = 2171;
 
         static double coupleRatio = 3.5714285714285716;
         static double driveRatio = 6.746031746031747;

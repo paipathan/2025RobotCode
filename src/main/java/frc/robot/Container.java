@@ -9,20 +9,23 @@ import com.ctre.phoenix.led.CANdle;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.generated.TunerConstants;
+import frc.robot.generated.RobotConstants;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.Arm;
 
 public class Container {
         Drivetrain drivetrain;
         Arm arm;
         Elevator elevator;
+        Vision vision;
         CANdle status;
 
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
+        Arm.Position coralScorePosition;
 
         public enum Mode {
                 Coral,
@@ -30,15 +33,18 @@ public class Container {
         }
 
         public Container() {
-                drivetrain = TunerConstants.createDrivetrain();
-                arm = new Arm(30, 41, 32);
-                elevator = new Elevator(20, 21, "drivetrain");
-                
-                status = new CANdle(55);
+                drivetrain = RobotConstants.createDrivetrain();
+                arm = new Arm(RobotConstants.armID, RobotConstants.rollerID, RobotConstants.distanceID);
+                elevator = new Elevator(RobotConstants.leftElevatorID, RobotConstants.rightElevatorID, RobotConstants.elevatorCANBus);
+                vision =  new Vision("limelight-front", null, null, null, null);
+        
+                status = new CANdle(RobotConstants.statusID);
 
                 mode = Mode.Coral;
                 coralLevel = Elevator.Position.L2_Coral;
                 algaeLevel = Elevator.Position.Low_Algae;
+                coralScorePosition = Arm.Position.Stow;
+
         }
 
         public Drivetrain getDrivetrain() {
@@ -51,6 +57,10 @@ public class Container {
 
         public Elevator getElevator() {
                 return elevator;
+        }
+
+        public Vision getVision() {
+                return vision;
         }
 
         public Mode getMode() {
@@ -78,27 +88,41 @@ public class Container {
         public void targetLow() {
                 coralLevel = Elevator.Position.L2_Coral;
                 algaeLevel = Elevator.Position.Low_Algae;
+                coralScorePosition = Arm.Position.Stow;
         }
         
         public void targetMedium() {
                 coralLevel = Elevator.Position.L3_Coral;
+                coralScorePosition = Arm.Position.Stow;
         }
 
         public void targetHigh() {
                 coralLevel = Elevator.Position.L4_Coral;
-                 algaeLevel = Elevator.Position.High_Algae;
+                algaeLevel = Elevator.Position.High_Algae;
+                coralScorePosition = Arm.Position.L4_Coral;
         }
 
         public Command drive(double leftX, double leftY, double rightX) {
-                ChassisSpeeds speeds = new ChassisSpeeds(-leftY * TunerConstants.maxSpeed, -leftX * TunerConstants.maxSpeed, -rightX * TunerConstants.maxRotation);
+                ChassisSpeeds speeds = new ChassisSpeeds(-leftY * RobotConstants.maxSpeed, -leftX * RobotConstants.maxSpeed, -rightX * RobotConstants.maxRotation);
                 return drivetrain.driveFieldCentric(speeds);
         }
 
-        public Command cancel() {
+        public Command stow() {
                 return Commands.sequence(
-                        arm.setPosition(Arm.Position.Stow),
+                        Commands.parallel(
+                                arm.setPosition(Arm.Position.Stow),
+                                arm.reset()
+                        ),
                         elevator.setPosition(Elevator.Position.Stow)
                 );
+        }
+
+
+        public Command manualOuttake() {
+                return Commands.either(
+                                arm.outtakeCoral(), 
+                                arm.outtakeAlgae(), 
+                        () -> mode == Mode.Coral);
         }
 
         public Command runIntake() {
@@ -132,8 +156,7 @@ public class Container {
                                 Commands.sequence(
                                         arm.setPosition(Arm.Position.Stow),
                                         elevator.setPosition(coralLevel),
-                                        Commands.waitSeconds(0.5),
-                                        arm.outtakeCoral()
+                                        arm.setPosition(coralScorePosition)
                                 ),
                                 Commands.none(),
 
@@ -142,9 +165,7 @@ public class Container {
                         Commands.either(
                                 Commands.sequence(
                                         arm.setPosition(Arm.Position.Hold_Algae),
-                                        elevator.setPosition(Elevator.Position.Stow),
-                                        arm.outtakeAlgae(),
-                                        arm.setPosition(Arm.Position.Stow)
+                                        elevator.setPosition(Elevator.Position.Stow)
                                 ),
                                 Commands.none(),
 
