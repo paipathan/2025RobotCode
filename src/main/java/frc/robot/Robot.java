@@ -5,19 +5,19 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.ButtonBoard.Action;
 
 public class Robot extends TimedRobot {
-        CommandXboxController controller;
+        XboxController controller;
         ButtonBoard board;
 
         Container container;
 
         public Robot() {
-                controller = new CommandXboxController(0);
+                controller = new XboxController(0);
                 board = new ButtonBoard(1);
 
                 container = new Container();
@@ -51,17 +51,19 @@ public class Robot extends TimedRobot {
 
         @Override
         public void teleopPeriodic() {
-                container.drive(controller.getLeftX(), controller.getLeftY(), controller.getRightX());
+                container.drive(controller.getLeftX(), controller.getLeftY(), controller.getRightX()).schedule();
 
-                if (board.getButton(Action.Mode_Coral)) container.modeCoral().schedule();
-                if (board.getButton(Action.Mode_Algae)) container.modeAlgae().schedule();
+                if (board.getButtonPressed(Action.Mode_Coral)) container.modeCoral().schedule();
+                if (board.getButtonPressed(Action.Mode_Algae)) container.modeAlgae().schedule();
 
-                if (board.getButton(Action.Target_Low)) container.targetLow().schedule();
-                if (board.getButton(Action.Target_Medium)) container.targetMedium().schedule();
-                if (board.getButton(Action.Target_High)) container.targetHigh().schedule();
+                if (board.getButtonPressed(Action.Target_Low)) container.targetLow().schedule();
+                if (board.getButtonPressed(Action.Target_Medium)) container.targetMedium().schedule();
+                if (board.getButtonPressed(Action.Target_High)) container.targetHigh().schedule();
 
-                if (controller.leftBumper().getAsBoolean()) container.runIntake().schedule();
-                if (controller.rightBumper().getAsBoolean()) container.runOuttake().schedule();
+                if (controller.getAButtonPressed()) container.stow().schedule();
+
+                if (controller.getLeftBumperButtonPressed()) container.runIntake().schedule();
+                if (controller.getRightBumperButtonPressed()) container.runOuttake().schedule();
         }
 
         @Override

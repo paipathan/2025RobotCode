@@ -8,6 +8,7 @@ import com.ctre.phoenix.led.CANdle;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain;
@@ -23,6 +24,7 @@ public class Container {
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
+        Arm.Position  coralScoringPosition;
 
         public enum Mode {
                 Coral,
@@ -39,6 +41,8 @@ public class Container {
                 mode = Mode.Coral;
                 coralLevel = Elevator.Position.L2_Coral;
                 algaeLevel = Elevator.Position.Low_Algae;
+                coralScoringPosition  = Arm.Position.Stow;
+
         }
 
         public Mode getMode() {
@@ -84,6 +88,7 @@ public class Container {
                         public void initialize() {
                                 coralLevel = Elevator.Position.L2_Coral;
                                 algaeLevel = Elevator.Position.Low_Algae;
+                                coralScoringPosition = Arm.Position.Stow;
                         }
 
                         public boolean isFinished() {
@@ -96,6 +101,7 @@ public class Container {
                 return new Command() {
                         public void initialize() {
                                 coralLevel = Elevator.Position.L3_Coral;
+                                coralScoringPosition = Arm.Position.Stow;
                         }
 
                         public boolean isFinished() {
@@ -109,6 +115,7 @@ public class Container {
                         public void initialize() {
                                 coralLevel = Elevator.Position.L4_Coral;
                                 algaeLevel = Elevator.Position.High_Algae;
+                                coralScoringPosition = Arm.Position.L4_Coral;
                         }
 
                         public boolean isFinished() {
@@ -119,12 +126,16 @@ public class Container {
 
         public Command drive(double leftX, double leftY, double rightX) {
                 ChassisSpeeds speeds = new ChassisSpeeds(-leftY * TunerConstants.maxSpeed, -leftX * TunerConstants.maxSpeed, -rightX * TunerConstants.maxRotation);
-                return drivetrain.driveRobotCentric(speeds);
+                return drivetrain.driveFieldCentric(speeds);
         }
 
         public Command stow() {
+                CommandScheduler.getInstance().cancelAll();
+
                 return Commands.sequence(
                         arm.setPosition(Arm.Position.Stow),
+                        arm.setRollers(0),
+
                         elevator.setPosition(Elevator.Position.Stow)
                 );
         }
@@ -160,6 +171,7 @@ public class Container {
                                 Commands.sequence(
                                         arm.setPosition(Arm.Position.Stow),
                                         elevator.setPosition(coralLevel),
+                                        arm.setPosition(coralScoringPosition),
                                         Commands.waitSeconds(0.5),
                                         arm.outtakeCoral()
                                 ),
