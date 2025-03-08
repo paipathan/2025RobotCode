@@ -126,10 +126,11 @@ public class Arm extends SubsystemBase {
                         }
 
                         public boolean isFinished() {
-                                return !hasCoral() && timer.get() > 0.7;
+                                return !hasCoral() && timer.get() > 1;
                         }
 
                         public void end(boolean interupted) {
+                                hasAlgae = false;
                                 rollers.set(0);
                         }
                 };
@@ -158,7 +159,7 @@ public class Arm extends SubsystemBase {
 
         public Command reset() {
                 return new Command() {
-                        public void initialize() {
+                        public void execute() {
                                 hasAlgae = false;
                                 rollers.set(0);
                         }

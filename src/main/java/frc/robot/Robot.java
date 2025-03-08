@@ -4,26 +4,31 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.ButtonBoard.Action;
-import frc.robot.subsystems.Vision.Camera;
 
 public class Robot extends TimedRobot {
         XboxController controller;
         ButtonBoard board;
-
         Container container;
+
+        StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault().
+                getStructTopic("Robot Pose", Pose2d.struct).publish();
 
         public Robot() {
                 controller = new XboxController(0);
                 board = new ButtonBoard(1);
-
                 container = new Container();
 
                 CommandScheduler.getInstance().cancelAll();
+
+                
         }
 
         @Override
@@ -62,7 +67,9 @@ public class Robot extends TimedRobot {
 
                 if(controller.getXButtonPressed()) container.manualOuttake().schedule();
                 
-                container.getDrivetrain().addVisionMeasurement(container.getVision().getPose(Camera.Front), Timer.getFPGATimestamp());               
+                publisher.set(container.getDrivetrain().getRobotPose());
+                
+                // container.getDrivetrain().addVisionMeasurement(container.getVision().getPose(Camera.Front), Timer.getFPGATimestamp());               
         }
 
         @Override

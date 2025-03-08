@@ -123,4 +123,12 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
                 super.addVisionMeasurement(visionPose, Utils.fpgaToCurrentTime(timestamp));
         }
+        
+        public Pose2d getRobotPose() {
+                return new Pose2d(
+                        this.getRotation3d().getX(), 
+                        this.getRotation3d().getY(), 
+                        new Rotation2d(this.getRotation3d().getAngle())
+                );
+        }
 }

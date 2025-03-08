@@ -122,12 +122,16 @@ public class Container {
                 return Commands.either(
                                 arm.outtakeCoral(), 
                                 arm.outtakeAlgae(), 
-                        () -> mode == Mode.Coral);
+                        () -> mode == Mode.Coral
+                );
         }
 
         public Command runIntake() {
                 return Commands.sequence(
-                        arm.setPosition(Arm.Position.Stow),
+                        Commands.parallel(
+                                arm.setPosition(Arm.Position.Stow), 
+                                arm.reset()
+                        ),
                         Commands.either(
                                 Commands.sequence(
                                         elevator.setPosition(Elevator.Position.Stow),
