@@ -51,6 +51,10 @@ public class Elevator extends SubsystemBase {
                 left.getConfigurator().apply(config);
         }
 
+        public double getPosition() {
+                return left.getPosition().getValueAsDouble();
+        }
+
         public Command setPosition(Position position) {
                 return new Command() {
                         public void execute() {

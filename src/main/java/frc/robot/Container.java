@@ -8,7 +8,6 @@ import com.ctre.phoenix.led.CANdle;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Drivetrain;
@@ -24,7 +23,6 @@ public class Container {
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
-        Arm.Position  coralScoringPosition;
 
         public enum Mode {
                 Coral,
@@ -41,8 +39,18 @@ public class Container {
                 mode = Mode.Coral;
                 coralLevel = Elevator.Position.L2_Coral;
                 algaeLevel = Elevator.Position.Low_Algae;
-                coralScoringPosition  = Arm.Position.Stow;
+        }
 
+        public Drivetrain getDrivetrain() {
+                return drivetrain;
+        }
+
+        public Arm getArm() {
+                return arm;
+        }
+
+        public Elevator getElevator() {
+                return elevator;
         }
 
         public Mode getMode() {
@@ -57,71 +65,28 @@ public class Container {
                 return algaeLevel;
         }
 
-        public Command modeCoral() {
-                return new Command() {
-                        public void initialize() {
-                                mode = Mode.Coral;
-                                status.setLEDs(255, 0, 255);
-                        }
-
-                        public boolean isFinished() {
-                                return true;
-                        }
-                };
+        public void modeCoral() {
+                mode = Mode.Coral;
+                status.setLEDs(255, 0, 255);
         }
 
-        public Command modeAlgae() {
-                return new Command() {
-                        public void initialize() {
-                                mode = Mode.Algae;
-                                status.setLEDs(0, 255, 0);
-                        }
-
-                        public boolean isFinished() {
-                                return true;
-                        }
-                };
+        public void modeAlgae() {
+                mode = Mode.Algae;
+                status.setLEDs(0, 255, 0);
         }
 
-        public Command targetLow() {
-                return new Command() {
-                        public void initialize() {
-                                coralLevel = Elevator.Position.L2_Coral;
-                                algaeLevel = Elevator.Position.Low_Algae;
-                                coralScoringPosition = Arm.Position.Stow;
-                        }
-
-                        public boolean isFinished() {
-                                return true;
-                        }
-                };
+        public void targetLow() {
+                coralLevel = Elevator.Position.L2_Coral;
+                algaeLevel = Elevator.Position.Low_Algae;
         }
         
-        public Command targetMedium() {
-                return new Command() {
-                        public void initialize() {
-                                coralLevel = Elevator.Position.L3_Coral;
-                                coralScoringPosition = Arm.Position.Stow;
-                        }
-
-                        public boolean isFinished() {
-                                return true;
-                        }
-                };
+        public void targetMedium() {
+                coralLevel = Elevator.Position.L3_Coral;
         }
 
-        public Command targetHigh() {
-                return new Command() {
-                        public void initialize() {
-                                coralLevel = Elevator.Position.L4_Coral;
-                                algaeLevel = Elevator.Position.High_Algae;
-                                coralScoringPosition = Arm.Position.L4_Coral;
-                        }
-
-                        public boolean isFinished() {
-                                return true;
-                        }
-                };
+        public void targetHigh() {
+                coralLevel = Elevator.Position.L4_Coral;
+                 algaeLevel = Elevator.Position.High_Algae;
         }
 
         public Command drive(double leftX, double leftY, double rightX) {
@@ -129,13 +94,9 @@ public class Container {
                 return drivetrain.driveFieldCentric(speeds);
         }
 
-        public Command stow() {
-                CommandScheduler.getInstance().cancelAll();
-
+        public Command cancel() {
                 return Commands.sequence(
                         arm.setPosition(Arm.Position.Stow),
-                        arm.setRollers(0),
-
                         elevator.setPosition(Elevator.Position.Stow)
                 );
         }
@@ -171,7 +132,6 @@ public class Container {
                                 Commands.sequence(
                                         arm.setPosition(Arm.Position.Stow),
                                         elevator.setPosition(coralLevel),
-                                        arm.setPosition(coralScoringPosition),
                                         Commands.waitSeconds(0.5),
                                         arm.outtakeCoral()
                                 ),

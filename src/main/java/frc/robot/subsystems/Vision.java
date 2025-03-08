@@ -12,65 +12,65 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utilities;
+import frc.robot.generated.LimelightHelpers;
 
 public class Vision extends SubsystemBase {
+        String frontID;
+
         AprilTagFieldLayout tagLayout;
         PhotonPoseEstimator estimator;
         
-        PhotonCamera frontLeftCam, frontRightCam, backLeftCam, backRightCam;
-        Transform3d frontLeftOffset, frontRightOffset, backLeftOffset, backRightOffset;
+        PhotonCamera leftCam, rightCam;
+        Transform3d leftOffset, rightOffset;
 
         public enum Camera {
-                Front_Left,
-                Front_Right,
-                Back_Left,
-                Back_Right
+                Front,
+                Left,
+                Right
         }
 
-        public Vision(String frontLeftID, Transform3d frontLeftOffset, String frontRightID, Transform3d frontRightOffset, String backLeftID, Transform3d backLeftOffset, String backRightID, Transform3d backRightOffset) {
+        public Vision(String frontID, String leftID, Transform3d leftOffset, String rightID, Transform3d rightOffset) {
+                this.frontID = frontID;
+
                 tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
                 estimator = new PhotonPoseEstimator(tagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, null);
 
-                frontLeftCam = new PhotonCamera(frontLeftID);
-                this.frontLeftOffset = frontLeftOffset;
+                leftCam = new PhotonCamera(leftID);
+                this.leftOffset = leftOffset;
 
-                frontRightCam = new PhotonCamera(frontRightID);
-                this.frontRightOffset = frontRightOffset;
-
-                backLeftCam = new PhotonCamera(backLeftID);
-                this.backLeftOffset = backLeftOffset;
-
-                backRightCam = new PhotonCamera(backRightID);
-                this.backRightOffset = backRightOffset;
+                rightCam = new PhotonCamera(rightID);
+                this.rightOffset = rightOffset;
         }
 
-        PhotonCamera GetCamera(Camera camera) {
+        PhotonCamera getCamera(Camera camera) {
                 switch (camera) {
-                        case Front_Left: return frontLeftCam;
-                        case Front_Right: return frontRightCam;
-                        case Back_Left: return backLeftCam;
-                        case Back_Right: return backRightCam;
+                        case Left: return leftCam;
+                        case Right: return rightCam;
                 
                         default: return null;
                 }
         }
 
-        Transform3d GetOffset(Camera camera) {
+        Transform3d getOffset(Camera camera) {
                 switch (camera) {
-                        case Front_Left: return frontLeftOffset;
-                        case Front_Right: return frontRightOffset;
-                        case Back_Left: return backLeftOffset;
-                        case Back_Right: return backRightOffset;
+                        case Left: return leftOffset;
+                        case Right: return rightOffset;
                 
                         default: return null;
                 }
         }
 
-        public Pose2d GetPose(Camera camera) {
-                estimator.setRobotToCameraTransform(GetOffset(camera));
-                return Utilities.toPose2d(estimator.update(GetCamera(camera).getAllUnreadResults().get(0)).get().estimatedPose);
+        public Pose2d getPose(Camera camera) {
+                if (camera == Camera.Front) {
+                        Pose2d pose = Utilities.getAlliance() == Alliance.Red ? LimelightHelpers.getRedPose(frontID) : LimelightHelpers.getBluePose(frontID);
+                        return pose;
+                }
+
+                estimator.setRobotToCameraTransform(getOffset(camera));
+                return Utilities.toPose2d(estimator.update(getCamera(camera).getAllUnreadResults().get(0)).get().estimatedPose);
         }
 
         @Override

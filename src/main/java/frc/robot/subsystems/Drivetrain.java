@@ -13,6 +13,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,8 +27,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
-        static Rotation2d bluePerspective = Rotation2d.kZero;
-        static Rotation2d redPerspective = Rotation2d.k180deg;
+        static Rotation2d redPerspective = Rotation2d.k180deg, bluePerspective = Rotation2d.kZero;
         boolean appliedPerspective = false;
 
         SwerveRequest.FieldCentric fieldCentric;
@@ -35,7 +35,7 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         RobotConfig robotConfig;
 
-        double percentSpeed = 0.2;
+        double percentSpeed = 0.8, antiTipping = 1;
 
         public Drivetrain(SwerveDrivetrainConstants drivetrainConfigs, SwerveModuleConstants<?, ?, ?>... modules) {
                 super(drivetrainConfigs, modules);
@@ -73,21 +73,29 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                 getPigeon2().reset();
                 seedFieldCentric();
         }
+        
+        public void  updateHeight(double height) {
+                antiTipping = (28 - height) / 28;
+        }
 
         public Command driveFieldCentric(ChassisSpeeds speeds) {
                 return run(() -> setControl(fieldCentric
-                        .withVelocityX(speeds.vxMetersPerSecond * percentSpeed)
-                        .withVelocityY(speeds.vyMetersPerSecond * percentSpeed)
+                        .withVelocityX(speeds.vxMetersPerSecond * percentSpeed * antiTipping)
+                        .withVelocityY(speeds.vyMetersPerSecond * percentSpeed * antiTipping)
                         .withRotationalRate(speeds.omegaRadiansPerSecond)
                 ));
         }
 
         public Command driveRobotCentric(ChassisSpeeds speeds) {
                 return run(() -> setControl(robotCentric
-                        .withVelocityX(speeds.vxMetersPerSecond * percentSpeed)
-                        .withVelocityY(speeds.vyMetersPerSecond * percentSpeed)
+                        .withVelocityX(speeds.vxMetersPerSecond * percentSpeed * antiTipping)
+                        .withVelocityY(speeds.vyMetersPerSecond * percentSpeed * antiTipping)
                         .withRotationalRate(speeds.omegaRadiansPerSecond)
                 ));
+        }
+
+        public Command driveToPose(Pose2d pose) {
+                return AutoBuilder.pathfindToPose(pose, new PathConstraints(TunerConstants.maxSpeed, 7.3, TunerConstants.maxRotation, 2171));
         }
 
         @Override

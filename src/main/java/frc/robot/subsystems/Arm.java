@@ -26,7 +26,7 @@ public class Arm extends SubsystemBase {
 
         public enum Position {
                 Stow(3.5),
-                L4_Coral(4.3),
+
                 Intake_Coral(-0.1),
                 Hold_Algae(21);
 
@@ -75,18 +75,6 @@ public class Arm extends SubsystemBase {
 
                         public boolean isFinished() {
                                 return Utilities.inTolerance(position.value - arm.getPosition().getValueAsDouble(), 0.2);
-                        }
-                };
-        }
-
-        public Command setRollers(double power) {
-                return new Command() {
-                        public void execute() {
-                                rollers.set(power);
-                        }
-
-                        public boolean isFinished() {
-                                return true;
                         }
                 };
         }
