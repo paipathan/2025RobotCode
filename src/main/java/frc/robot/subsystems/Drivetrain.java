@@ -5,6 +5,9 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -22,11 +25,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Constants;
 import frc.robot.Utilities;
-import frc.robot.generated.RobotConstants;
-import frc.robot.generated.RobotConstants.TunerSwerveDrivetrain;
 
-public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
+public class Drivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> implements Subsystem {
         static Rotation2d redPerspective = Rotation2d.k180deg, bluePerspective = Rotation2d.kZero;
         boolean appliedPerspective = false;
 
@@ -35,17 +37,17 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         RobotConfig robotConfig;
 
-        double percentSpeed = 0.8, antiTipping = 1;
+        double percentSpeed = 0.8, antiTipping;
 
         public Drivetrain(SwerveDrivetrainConstants drivetrainConfigs, SwerveModuleConstants<?, ?, ?>... modules) {
-                super(drivetrainConfigs, modules);
+                super(TalonFX::new, TalonFX::new, CANcoder::new, drivetrainConfigs, modules);
 
                 fieldCentric = new SwerveRequest.FieldCentric()
-                        .withDeadband(RobotConstants.maxSpeed * 0.1).withRotationalDeadband(RobotConstants.maxRotation * 0.1)
+                        .withDeadband(Constants.Tuner.maxSpeed * 0.1).withRotationalDeadband(Constants.Tuner.maxAngularSpeed * 0.1)
                         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
                 robotCentric = new SwerveRequest.RobotCentric()
-                        .withDeadband(RobotConstants.maxSpeed * 0.1).withRotationalDeadband(RobotConstants.maxRotation * 0.1)
+                        .withDeadband(Constants.Tuner.maxSpeed * 0.1).withRotationalDeadband(Constants.Tuner.maxAngularSpeed * 0.1)
                         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
                 try {
@@ -69,13 +71,10 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
                         () -> Utilities.getAlliance() == Alliance.Red,
                         this
                 );
-
-                getPigeon2().reset();
-                seedFieldCentric();
         }
         
-        public void  updateHeight(double height) {
-                antiTipping = (28 - height) / 28;
+        public void updateHeight(double height) {
+                antiTipping = (30 - height) / 30;
         }
 
         public Command driveFieldCentric(ChassisSpeeds speeds) {
@@ -96,14 +95,14 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
 
         public Command driveToPose(Pose2d targetPose) {
                 return AutoBuilder.pathfindToPose(
-                                targetPose, 
-                                new PathConstraints(
-                                        RobotConstants.maxSpeed, 
-                                        RobotConstants.maxAcceleration, 
-                                        RobotConstants.maxRotation, 
-                                        RobotConstants.maxAngularAcceleration
-                                )
-                        );
+                        targetPose, 
+                        new PathConstraints(
+                                Constants.Tuner.maxSpeed, 
+                                Constants.Tuner.maxAcceleration, 
+                                Constants.Tuner.maxAngularSpeed, 
+                                Constants.Tuner.maxAngularAcceleration
+                        )
+                );
         }
 
         @Override
@@ -122,13 +121,5 @@ public class Drivetrain extends TunerSwerveDrivetrain implements Subsystem {
         @Override
         public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
                 super.addVisionMeasurement(visionPose, Utils.fpgaToCurrentTime(timestamp));
-        }
-        
-        public Pose2d getRobotPose() {
-                return new Pose2d(
-                        this.getRotation3d().getX(), 
-                        this.getRotation3d().getY(), 
-                        new Rotation2d(this.getRotation3d().getAngle())
-                );
         }
 }

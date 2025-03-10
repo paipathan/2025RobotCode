@@ -5,30 +5,40 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import frc.robot.subsystems.Elevator;
 
 public class Utilities {
         public enum Side {
-                A,
-                B,
-                C,
-                D,
-                E,
-                F
+                A(new Pose2d(), new Pose2d(), new Pose2d(), Elevator.Position.High_Algae),
+                B(new Pose2d(), new Pose2d(), new Pose2d(), Elevator.Position.Low_Algae),
+                C(new Pose2d(), new Pose2d(), new Pose2d(), Elevator.Position.High_Algae),
+                D(new Pose2d(), new Pose2d(), new Pose2d(), Elevator.Position.Low_Algae),
+                E(new Pose2d(), new Pose2d(), new Pose2d(), Elevator.Position.High_Algae),
+                F(new Pose2d(), new Pose2d(), new Pose2d(), Elevator.Position.Low_Algae);
+
+                Pose2d leftOffset, rightOffset, centerOffset;
+                Elevator.Position algaeLevel;
+
+                Side(Pose2d leftOffset, Pose2d rightOffset, Pose2d centerOffset, Elevator.Position algaeLevel) {
+                        this.leftOffset = leftOffset;
+                        this.rightOffset = rightOffset;
+                        this.centerOffset = centerOffset;
+
+                        this.algaeLevel = algaeLevel;
+                }
         }
 
         public static Alliance getAlliance() {
                 return DriverStation.getAlliance().get();
         }
-
-        public static Pose2d toPose2d(Pose3d pose) {
+        
+        public static Pose2d addOffset(Pose2d pose, Pose2d offset) {
                 return new Pose2d(
-                        pose.getX(),
-                        pose.getY(),
-                        new Rotation2d(pose.getRotation().getZ())
+                        pose.getX() + offset.getX(),
+                        pose.getY() + offset.getY(),
+                        pose.getRotation()
                 );
         }
 
@@ -53,7 +63,7 @@ public class Utilities {
         }
 
         public static Side getClosestSide(Pose2d robotPose) {
-                Pose2d center = getAlliance() == Alliance.Red ? new Pose2d() : new Pose2d();
+                Pose2d center = getAlliance() == Alliance.Red ? Constants.Alignment.redCenter : Constants.Alignment.blueCenter;
                 double angle = Math.atan2(robotPose.getX() - center.getX(), robotPose.getY() - center.getY()) % 360;
 
                 if (angle > 300) return Side.B;

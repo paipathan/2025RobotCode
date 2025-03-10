@@ -17,16 +17,16 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utilities;
 
 public class Arm extends SubsystemBase {
-        TalonFX arm;
+        TalonFX pivot;
         TalonFX rollers;
         CANrange distance;
 
         Timer timer;
-        boolean hasAlgae;
+        boolean hasAlgae = false;
 
         public enum Position {
-                Stow(3.5),
-                L4_Coral(4.3),
+                Stow(3),
+
                 Intake_Coral(-0.1),
                 Hold_Algae(21);
 
@@ -37,8 +37,8 @@ public class Arm extends SubsystemBase {
                 }
         }
 
-        public Arm(int armID, int rollersID, int distanceID) {
-                arm = new TalonFX(armID);
+        public Arm(int pivotID, int rollersID, int distanceID) {
+                pivot = new TalonFX(pivotID);
                 rollers = new TalonFX(rollersID);
 
                 distance = new CANrange(distanceID);
@@ -51,7 +51,7 @@ public class Arm extends SubsystemBase {
 
                 config.MotionMagic.MotionMagicCruiseVelocity = 40;
                 config.MotionMagic.MotionMagicAcceleration = 60;
-                arm.getConfigurator().apply(config);
+                pivot.getConfigurator().apply(config);
 
                 timer = new Timer();
                 timer.start();
@@ -70,17 +70,21 @@ public class Arm extends SubsystemBase {
         public Command setPosition(Position position) {
                 return new Command() {
                         public void execute() {
-                                arm.setControl(new MotionMagicExpoVoltage(position.value));
+                                pivot.setControl(new MotionMagicExpoVoltage(position.value));
                         }
 
                         public boolean isFinished() {
-                                return Utilities.inTolerance(position.value - arm.getPosition().getValueAsDouble(), 0.2);
+                                return Utilities.inTolerance(position.value - pivot.getPosition().getValueAsDouble(), 0.2);
                         }
                 };
         }
 
         public Command intakeCoral() {
                 return new Command() {
+                        public void initialize() {
+                                hasAlgae = false;
+                        }
+
                         public void execute() {
                                 rollers.set(-0.6);
                         }
@@ -118,6 +122,7 @@ public class Arm extends SubsystemBase {
         public Command outtakeCoral() {
                 return new Command() {
                         public void initialize() {
+                                hasAlgae = false;
                                 timer.reset();
                         }
 
@@ -130,7 +135,6 @@ public class Arm extends SubsystemBase {
                         }
 
                         public void end(boolean interupted) {
-                                hasAlgae = false;
                                 rollers.set(0);
                         }
                 };
@@ -153,19 +157,6 @@ public class Arm extends SubsystemBase {
                         public void end(boolean interupted) {
                                 hasAlgae = false;
                                 rollers.set(0);
-                        }
-                };
-        }
-
-        public Command reset() {
-                return new Command() {
-                        public void execute() {
-                                hasAlgae = false;
-                                rollers.set(0);
-                        }
-
-                        public boolean isFinished() {
-                                return true;
                         }
                 };
         }

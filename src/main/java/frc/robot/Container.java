@@ -6,26 +6,24 @@ package frc.robot;
 
 import com.ctre.phoenix.led.CANdle;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.generated.RobotConstants;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.Arm;
 
 public class Container {
         Drivetrain drivetrain;
         Arm arm;
         Elevator elevator;
-        Vision vision;
-        CANdle status;
+
+        CANdle lights;
 
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
-        Arm.Position coralScorePosition;
 
         public enum Mode {
                 Coral,
@@ -33,18 +31,15 @@ public class Container {
         }
 
         public Container() {
-                drivetrain = RobotConstants.createDrivetrain();
-                arm = new Arm(RobotConstants.armID, RobotConstants.rollerID, RobotConstants.distanceID);
-                elevator = new Elevator(RobotConstants.leftElevatorID, RobotConstants.rightElevatorID, RobotConstants.elevatorCANBus);
-                vision =  new Vision("limelight-front", null, null, null, null);
-        
-                status = new CANdle(RobotConstants.statusID);
+                drivetrain = new Drivetrain(Constants.Tuner.drivetrainConfigs, Constants.Tuner.frontLeftConfigs, Constants.Tuner.frontRightConfigs, Constants.Tuner.backLeftConfigs, Constants.Tuner.backRightConfigs);
+                arm = new Arm(Constants.Arm.pivotID, Constants.Arm.rollersID, Constants.Arm.distanceID);
+                elevator = new Elevator(Constants.Elevator.leftID, Constants.Elevator.rightID, Constants.canivoreID);
+
+                lights = new CANdle(Constants.lightsID);
 
                 mode = Mode.Coral;
                 coralLevel = Elevator.Position.L2_Coral;
                 algaeLevel = Elevator.Position.Low_Algae;
-                coralScorePosition = Arm.Position.Stow;
-
         }
 
         public Drivetrain getDrivetrain() {
@@ -59,10 +54,6 @@ public class Container {
                 return elevator;
         }
 
-        public Vision getVision() {
-                return vision;
-        }
-
         public Mode getMode() {
                 return mode;
         }
@@ -75,63 +66,76 @@ public class Container {
                 return algaeLevel;
         }
 
+        public Pose2d getRobotPose() {
+                return drivetrain.getState().Pose;
+        }
+
         public void modeCoral() {
                 mode = Mode.Coral;
-                status.setLEDs(255, 0, 255);
+                lights.setLEDs(255, 0, 255);
         }
 
         public void modeAlgae() {
                 mode = Mode.Algae;
-                status.setLEDs(0, 255, 0);
-        }
-
-        public void targetLow() {
-                coralLevel = Elevator.Position.L2_Coral;
-                algaeLevel = Elevator.Position.Low_Algae;
-                coralScorePosition = Arm.Position.Stow;
-        }
-        
-        public void targetMedium() {
-                coralLevel = Elevator.Position.L3_Coral;
-                coralScorePosition = Arm.Position.Stow;
-        }
-
-        public void targetHigh() {
-                coralLevel = Elevator.Position.L4_Coral;
-                algaeLevel = Elevator.Position.High_Algae;
-                coralScorePosition = Arm.Position.L4_Coral;
+                lights.setLEDs(0, 255, 0);
         }
 
         public Command drive(double leftX, double leftY, double rightX) {
-                ChassisSpeeds speeds = new ChassisSpeeds(-leftY * RobotConstants.maxSpeed, -leftX * RobotConstants.maxSpeed, -rightX * RobotConstants.maxRotation);
+                ChassisSpeeds speeds = new ChassisSpeeds(-leftY * Constants.Tuner.maxSpeed, -leftX * Constants.Tuner.maxSpeed, -rightX * Constants.Tuner.maxAngularSpeed);
                 return drivetrain.driveFieldCentric(speeds);
         }
 
         public Command stow() {
                 return Commands.sequence(
-                        Commands.parallel(
+                        Commands.either(
                                 arm.setPosition(Arm.Position.Stow),
-                                arm.reset()
+                                arm.setPosition(Arm.Position.Hold_Algae),
+                                
+                                () -> !arm.hasAlgae()
                         ),
                         elevator.setPosition(Elevator.Position.Stow)
                 );
         }
 
+        public Command targetLow() {
+                return Commands.sequence(
+                        arm.setPosition(Arm.Position.Stow),
+                        Commands.either(
+                                elevator.setPosition(Elevator.Position.L2_Coral),
+                                elevator.setPosition(Elevator.Position.Low_Algae),
 
-        public Command manualOuttake() {
-                return Commands.either(
-                                arm.outtakeCoral(), 
-                                arm.outtakeAlgae(), 
-                        () -> mode == Mode.Coral
+                                () -> mode == Mode.Coral
+                        )
+                );
+        }
+
+        public Command targetMedium() {
+                return Commands.sequence(
+                        arm.setPosition(Arm.Position.Stow),
+                        Commands.either(
+                                elevator.setPosition(Elevator.Position.L3_Coral),
+                                Commands.none(),
+
+                                () -> mode == Mode.Coral
+                        )
+                );
+        }
+
+        public Command targetHigh() {
+                return Commands.sequence(
+                        arm.setPosition(Arm.Position.Stow),
+                        Commands.either(
+                                elevator.setPosition(Elevator.Position.L4_Coral),
+                                elevator.setPosition(Elevator.Position.High_Algae),
+
+                                () -> mode == Mode.Coral
+                        )
                 );
         }
 
         public Command runIntake() {
                 return Commands.sequence(
-                        Commands.parallel(
-                                arm.setPosition(Arm.Position.Stow), 
-                                arm.reset()
-                        ),
+                        arm.setPosition(Arm.Position.Stow),
                         Commands.either(
                                 Commands.sequence(
                                         elevator.setPosition(Elevator.Position.Stow),
@@ -142,7 +146,6 @@ public class Container {
                                         arm.setPosition(Arm.Position.Stow)
                                 ),
                                 Commands.sequence(
-                                        elevator.setPosition(algaeLevel),
                                         Commands.parallel(
                                                 arm.setPosition(Arm.Position.Hold_Algae),
                                                 arm.intakeAlgae()
@@ -156,25 +159,8 @@ public class Container {
 
         public Command runOuttake() {
                 return Commands.either(
-                        Commands.either(
-                                Commands.sequence(
-                                        arm.setPosition(Arm.Position.Stow),
-                                        elevator.setPosition(coralLevel),
-                                        arm.setPosition(coralScorePosition)
-                                ),
-                                Commands.none(),
-
-                                () -> arm.hasCoral()
-                        ),
-                        Commands.either(
-                                Commands.sequence(
-                                        arm.setPosition(Arm.Position.Hold_Algae),
-                                        elevator.setPosition(Elevator.Position.Stow)
-                                ),
-                                Commands.none(),
-
-                                () -> arm.hasAlgae()
-                        ),
+                        arm.outtakeCoral(),
+                        arm.outtakeAlgae(),
 
                         () -> mode == Mode.Coral
                 );
