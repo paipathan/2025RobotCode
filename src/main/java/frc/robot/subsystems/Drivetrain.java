@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -116,10 +115,5 @@ public class Drivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> imp
                                 appliedPerspective = true;
                         } );
                 }
-        }
-
-        @Override
-        public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
-                super.addVisionMeasurement(visionPose, Utils.fpgaToCurrentTime(timestamp));
         }
 }
