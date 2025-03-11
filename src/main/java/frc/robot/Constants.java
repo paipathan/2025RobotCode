@@ -12,8 +12,6 @@ import com.ctre.phoenix6.swerve.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.*;
 
 public class Constants {
@@ -143,9 +141,17 @@ public class Constants {
 
         public class Vision {
                 public static String frontID = "limelight";
-        }
 
-        public class Alignment {
-                public static Pose2d redCenter = new Pose2d(), blueCenter = new Pose2d();
+                public static Pose2d[] leftPoses = new Pose2d[] {
+
+                };
+
+                public static Pose2d[] rightPoses = new Pose2d[] {
+
+                };
+
+                public static Pose2d[] centerPoses = new Pose2d[] {
+
+                };
         }
 }

@@ -4,23 +4,23 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.led.CANdle;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.ButtonBoard.Action;
-import frc.robot.Utilities.Side;
 
 public class Robot extends TimedRobot {
         XboxController controller;
         ButtonBoard board;
 
         Container container;
+        CANdle lights;
 
         StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault().
                 getStructTopic("Robot Pose", Pose2d.struct).publish();
@@ -30,14 +30,9 @@ public class Robot extends TimedRobot {
                 board = new ButtonBoard(Constants.boardID);
 
                 container = new Container();
+                lights = new CANdle(Constants.lightsID);
 
                 CommandScheduler.getInstance().cancelAll();
-
-                SmartDashboard.putNumber("tx", container.getVision().getTX());
-                SmartDashboard.putNumber("ty", container.getVision().getTY());
-                SmartDashboard.putNumber("Tag Distance", container.getVision().getTagDistance());
-
-
         }
 
         @Override
@@ -48,9 +43,6 @@ public class Robot extends TimedRobot {
 
                 container.getDrivetrain().addVisionMeasurement(container.getVision().getPoseEstimate(), Timer.getFPGATimestamp());
                 publisher.set(container.getRobotPose());
-
-                SmartDashboard.updateValues();
-
         }
 
         @Override
@@ -67,7 +59,6 @@ public class Robot extends TimedRobot {
 
         @Override
         public void teleopPeriodic() {
-                container.drive(controller.getLeftX(), controller.getLeftY(), controller.getRightX()).schedule();
                 if (controller.getXButtonPressed()) container.getDrivetrain().seedFieldCentric();
 
                 if (board.getButtonPressed(Action.Mode_Coral)) container.modeCoral();
@@ -76,20 +67,20 @@ public class Robot extends TimedRobot {
                 if (controller.getAButtonPressed()) container.stow().schedule();
                 if (controller.getXButtonPressed()) container.getDrivetrain().seedFieldCentric();
                 
-                if (board.getButtonPressed(Action.Target_Low)) container.targetLow().schedule();
-                if (board.getButtonPressed(Action.Target_Medium)) container.targetMedium().schedule();
-                if (board.getButtonPressed(Action.Target_High)) container.targetHigh().schedule();
+                if (board.getButtonPressed(Action.Target_Low)) container.targetLow();
+                if (board.getButtonPressed(Action.Target_Medium)) container.targetMedium();
+                if (board.getButtonPressed(Action.Target_High)) container.targetHigh();
 
-                Pose2d center = Utilities.getAlliance() == Alliance.Red ? Constants.Alignment.redCenter : Constants.Alignment.blueCenter;
-                Side side = Utilities.getClosestSide(container.getRobotPose());
-                
-                if (board.getButtonPressed(Action.Align_Left)) container.getDrivetrain().driveToPose(Utilities.addOffset(center, side.leftOffset));
-                if (board.getButtonPressed(Action.Align_Right)) container.getDrivetrain().driveToPose(Utilities.addOffset(center, side.rightOffset));
-                if (board.getButtonPressed(Action.Align_Center)) container.getDrivetrain().driveToPose(Utilities.addOffset(center, side.centerOffset));
+                int side = Utilities.getClosestSide(Constants.Vision.centerPoses, container.getRobotPose());
+
+                if (board.getButtonPressed(Action.Align_Left)) container.getDrivetrain().driveToPose(Constants.Vision.leftPoses[side]).schedule();
+                else if (board.getButtonPressed(Action.Align_Right)) container.getDrivetrain().driveToPose(Constants.Vision.rightPoses[side]).schedule();
+                else if (board.getButtonPressed(Action.Align_Center)) container.getDrivetrain().driveToPose(Constants.Vision.centerPoses[side]).schedule();
+
+                else container.drive(controller.getLeftX(), controller.getLeftY(), controller.getRightX()).schedule();
 
                 if (controller.getLeftBumperButtonPressed()) container.runIntake().schedule();
-                if (controller.getRightBumperButtonPressed()) container.runOuttake().schedule();   
-                
+                if (controller.getRightBumperButtonPressed()) container.runOuttake().schedule();
         }
 
         @Override

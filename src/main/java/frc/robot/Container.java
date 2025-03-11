@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.led.CANdle;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,8 +19,6 @@ public class Container {
         Elevator elevator;
         Vision vision;
 
-        CANdle lights;
-
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
@@ -37,8 +33,6 @@ public class Container {
                 arm = new Arm(Constants.Arm.pivotID, Constants.Arm.rollersID, Constants.Arm.distanceID);
                 elevator = new Elevator(Constants.Elevator.leftID, Constants.Elevator.rightID, Constants.canivoreID);
                 vision = new Vision(Constants.Vision.frontID);
-
-                lights = new CANdle(Constants.lightsID);
 
                 mode = Mode.Coral;
                 coralLevel = Elevator.Position.L2_Coral;
@@ -79,12 +73,24 @@ public class Container {
 
         public void modeCoral() {
                 mode = Mode.Coral;
-                lights.setLEDs(255, 0, 255);
         }
 
         public void modeAlgae() {
                 mode = Mode.Algae;
-                lights.setLEDs(0, 255, 0);
+        }
+
+        public void targetLow() {
+                coralLevel = Elevator.Position.L2_Coral;
+                algaeLevel = Elevator.Position.Low_Algae;
+        }
+
+        public void targetMedium() {
+                coralLevel = Elevator.Position.L3_Coral;
+        }
+
+        public void targetHigh() {
+                coralLevel = Elevator.Position.L4_Coral;
+                algaeLevel = Elevator.Position.High_Algae;
         }
 
         public Command drive(double leftX, double leftY, double rightX) {
@@ -95,53 +101,13 @@ public class Container {
         public Command stow() {
                 return Commands.sequence(
                         Commands.either(
-                                arm.setPosition(Arm.Position.Stow),
                                 arm.setPosition(Arm.Position.Hold_Algae),
+                                arm.setPosition(Arm.Position.Stow),
                                 
-                                () -> !arm.hasAlgae()
+                                () -> arm.hasAlgae()
                         ),
                         elevator.setPosition(Elevator.Position.Stow)
                 );
-        }
-
-        public Command targetLow() {
-                return Commands.sequence(
-                        arm.setPosition(Arm.Position.Stow),
-                        Commands.either(
-                                elevator.setPosition(Elevator.Position.L2_Coral),
-                                elevator.setPosition(Elevator.Position.Low_Algae),
-
-                                () -> mode == Mode.Coral
-                        )
-                );
-        }
-
-        public Command targetMedium() {
-                return Commands.sequence(
-                        arm.setPosition(Arm.Position.Stow),
-                        Commands.either(
-                                elevator.setPosition(Elevator.Position.L3_Coral),
-                                Commands.none(),
-
-                                () -> mode == Mode.Coral
-                        )
-                );
-        }
-
-        public Command targetHigh() {
-                return Commands.either(
-                                Commands.sequence(
-                                        arm.setPosition(Arm.Position.L4_Coral), 
-                                        elevator.setPosition(Elevator.Position.L4_Coral)
-                                ),
-                                Commands.sequence(
-                                        arm.setPosition(Arm.Position.Stow), 
-                                        elevator.setPosition(Elevator.Position.High_Algae)
-                                ),
-
-                                () -> mode == Mode.Coral
-                        );
-             
         }
 
         public Command runIntake() {
@@ -159,6 +125,7 @@ public class Container {
                                 Commands.sequence(
                                         Commands.parallel(
                                                 arm.setPosition(Arm.Position.Hold_Algae),
+                                                elevator.setPosition(algaeLevel),
                                                 arm.intakeAlgae()
                                         )
                                 ),
@@ -170,7 +137,15 @@ public class Container {
 
         public Command runOuttake() {
                 return Commands.either(
-                        arm.outtakeCoral(),
+                        Commands.either(
+                                arm.outtakeCoral(),
+                                Commands.sequence(
+                                        arm.setPosition(Arm.Position.Stow),
+                                        elevator.setPosition(coralLevel)
+                                ),
+                                
+                                () -> Utilities.inTolerance(coralLevel.value - elevator.getPosition(), 0.4)
+                        ),
                         arm.outtakeAlgae(),
 
                         () -> mode == Mode.Coral

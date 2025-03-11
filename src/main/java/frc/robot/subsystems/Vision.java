@@ -5,10 +5,8 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 import frc.robot.LimelightHelpers;
 import frc.robot.Utilities;
 
@@ -20,19 +18,8 @@ public class Vision extends SubsystemBase {
         }
 
         public Pose2d getPoseEstimate() {
-                return Utilities.getAlliance() == Alliance.Red ? LimelightHelpers.getRedPoseEstimate(frontID) : LimelightHelpers.getBluePoseEstimate(frontID);
-        }
-
-        public double getTX() {
-                return NetworkTableInstance.getDefault().getTable(frontID).getEntry("tx").getDouble(0.0);
-        }       
-
-        public double getTY() {
-                return NetworkTableInstance.getDefault().getTable(frontID).getEntry("ty").getDouble(0.0);   
-        }
-
-        public double getTagDistance() {
-                return (6-4)/Math.tan(35+getTY()); // Change 5 (height of camera off ground)
+                Pose2d estimate = Utilities.getAlliance() == Alliance.Red ? LimelightHelpers.getRedPoseEstimate(frontID) : LimelightHelpers.getBluePoseEstimate(frontID);
+                return estimate;
         }
         
         @Override

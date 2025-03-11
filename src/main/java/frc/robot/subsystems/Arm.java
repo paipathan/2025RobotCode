@@ -25,8 +25,8 @@ public class Arm extends SubsystemBase {
         boolean hasAlgae = false;
 
         public enum Position {
-                Stow(3),
-                L4_Coral(4.3),
+                Stow(2.5),
+
                 Intake_Coral(-0.1),
                 Hold_Algae(21);
 
@@ -131,7 +131,7 @@ public class Arm extends SubsystemBase {
                         }
 
                         public boolean isFinished() {
-                                return !hasCoral() && timer.get() > 0.7;
+                                return !hasCoral() && timer.get() > 0.5;
                         }
 
                         public void end(boolean interupted) {
@@ -151,7 +151,7 @@ public class Arm extends SubsystemBase {
                         }
 
                         public boolean isFinished() {
-                                return timer.get() > 2;
+                                return timer.get() > 0.5;
                         }
 
                         public void end(boolean interupted) {
