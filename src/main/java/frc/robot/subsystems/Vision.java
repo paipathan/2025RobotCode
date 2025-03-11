@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -23,15 +24,15 @@ public class Vision extends SubsystemBase {
         }
 
         public double getTX() {
-                return Constants.Vision.table.getEntry("tx").getDouble(0.0);
+                return NetworkTableInstance.getDefault().getTable(frontID).getEntry("tx").getDouble(0.0);
         }       
 
         public double getTY() {
-                return Constants.Vision.table.getEntry("ty").getDouble(0.0);   
+                return NetworkTableInstance.getDefault().getTable(frontID).getEntry("ty").getDouble(0.0);   
         }
 
         public double getTagDistance() {
-                return (6-4)/Math.tan(30+getTY()); // Change 5 (height of camera off ground)
+                return (6-4)/Math.tan(35+getTY()); // Change 5 (height of camera off ground)
         }
         
         @Override

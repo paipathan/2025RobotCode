@@ -143,8 +143,6 @@ public class Constants {
 
         public class Vision {
                 public static String frontID = "limelight";
-                public final static NetworkTable table = NetworkTableInstance.getDefault().getTable(frontID);
-
         }
 
         public class Alignment {
