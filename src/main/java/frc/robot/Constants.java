@@ -59,7 +59,7 @@ public class Constants {
 
                 public static double maxSpeed = 4.73;
                 public static double maxAcceleration = 7.3;
-                public static double maxAngularSpeed = 4.71;
+                public static double maxAngularSpeed = 540;
                 public static double maxAngularAcceleration = 2171;
 
                 static double coupleRatio = 3.5714285714285716;
