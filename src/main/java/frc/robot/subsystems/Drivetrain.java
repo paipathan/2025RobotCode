@@ -17,6 +17,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -34,12 +35,19 @@ public class Drivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> imp
         SwerveRequest.FieldCentric fieldCentric;
         SwerveRequest.RobotCentric robotCentric;
 
+        PIDController translationPID;
+        PIDController headingPID;
+
         RobotConfig robotConfig;
 
         double percentSpeed = 0.8, antiTipping;
 
         public Drivetrain(SwerveDrivetrainConstants drivetrainConfigs, SwerveModuleConstants<?, ?, ?>... modules) {
                 super(TalonFX::new, TalonFX::new, CANcoder::new, drivetrainConfigs, modules);
+
+                translationPID = new PIDController(0, 0, 0);
+                headingPID = new PIDController(0, 0, 0);
+
 
                 fieldCentric = new SwerveRequest.FieldCentric()
                         .withDeadband(Constants.Tuner.maxSpeed * 0.1).withRotationalDeadband(Constants.Tuner.maxAngularSpeed * 0.1)
@@ -76,6 +84,7 @@ public class Drivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> imp
                 antiTipping = (30 - height) / 30;
         }
 
+
         public Command driveFieldCentric(ChassisSpeeds speeds) {
                 return run(() -> setControl(fieldCentric
                         .withVelocityX(speeds.vxMetersPerSecond * percentSpeed * antiTipping)
@@ -103,6 +112,16 @@ public class Drivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> imp
                         )
                 );
         }
+
+        public Command pidToPose() {
+                return run(() -> setControl(fieldCentric
+                        .withVelocityX(translationPID.calculate(0))
+                        .withVelocityY(translationPID.calculate(0))
+                        .withRotationalRate(headingPID.calculate(0))
+                ));
+        }
+
+
 
         @Override
         public void periodic() {

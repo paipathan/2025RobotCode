@@ -12,6 +12,8 @@ import com.ctre.phoenix6.swerve.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.*;
 
 public class Constants {
@@ -137,6 +139,12 @@ public class Constants {
 
         public class Elevator {
                 public static int leftID = 20, rightID = 21;
+        }
+
+        public class Vision {
+                public static String frontID = "limelight";
+                public final static NetworkTable table = NetworkTableInstance.getDefault().getTable(frontID);
+
         }
 
         public class Alignment {

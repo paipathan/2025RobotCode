@@ -8,7 +8,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.ButtonBoard.Action;
@@ -30,6 +32,12 @@ public class Robot extends TimedRobot {
                 container = new Container();
 
                 CommandScheduler.getInstance().cancelAll();
+
+                SmartDashboard.putNumber("tx", container.getVision().getTX());
+                SmartDashboard.putNumber("ty", container.getVision().getTY());
+                SmartDashboard.putNumber("Tag Distance", container.getVision().getTagDistance());
+
+
         }
 
         @Override
@@ -37,7 +45,12 @@ public class Robot extends TimedRobot {
                 CommandScheduler.getInstance().run();
 
                 container.getDrivetrain().updateHeight(container.getElevator().getPosition());
+
+                container.getDrivetrain().addVisionMeasurement(container.getVision().getPoseEstimate(), Timer.getFPGATimestamp());
                 publisher.set(container.getRobotPose());
+
+                SmartDashboard.updateValues();
+
         }
 
         @Override
@@ -75,7 +88,8 @@ public class Robot extends TimedRobot {
                 if (board.getButtonPressed(Action.Align_Center)) container.getDrivetrain().driveToPose(Utilities.addOffset(center, side.centerOffset));
 
                 if (controller.getLeftBumperButtonPressed()) container.runIntake().schedule();
-                if (controller.getRightBumperButtonPressed()) container.runOuttake().schedule();          
+                if (controller.getRightBumperButtonPressed()) container.runOuttake().schedule();   
+                
         }
 
         @Override

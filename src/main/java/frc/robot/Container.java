@@ -12,12 +12,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.Arm;
 
 public class Container {
         Drivetrain drivetrain;
         Arm arm;
         Elevator elevator;
+        Vision vision;
 
         CANdle lights;
 
@@ -34,6 +36,7 @@ public class Container {
                 drivetrain = new Drivetrain(Constants.Tuner.drivetrainConfigs, Constants.Tuner.frontLeftConfigs, Constants.Tuner.frontRightConfigs, Constants.Tuner.backLeftConfigs, Constants.Tuner.backRightConfigs);
                 arm = new Arm(Constants.Arm.pivotID, Constants.Arm.rollersID, Constants.Arm.distanceID);
                 elevator = new Elevator(Constants.Elevator.leftID, Constants.Elevator.rightID, Constants.canivoreID);
+                vision = new Vision(Constants.Vision.frontID);
 
                 lights = new CANdle(Constants.lightsID);
 
@@ -52,6 +55,10 @@ public class Container {
 
         public Elevator getElevator() {
                 return elevator;
+        }
+
+        public Vision getVision() {
+                return vision;
         }
 
         public Mode getMode() {
@@ -122,15 +129,19 @@ public class Container {
         }
 
         public Command targetHigh() {
-                return Commands.sequence(
-                        arm.setPosition(Arm.Position.Stow),
-                        Commands.either(
-                                elevator.setPosition(Elevator.Position.L4_Coral),
-                                elevator.setPosition(Elevator.Position.High_Algae),
+                return Commands.either(
+                                Commands.sequence(
+                                        arm.setPosition(Arm.Position.L4_Coral), 
+                                        elevator.setPosition(Elevator.Position.L4_Coral)
+                                ),
+                                Commands.sequence(
+                                        arm.setPosition(Arm.Position.Stow), 
+                                        elevator.setPosition(Elevator.Position.High_Algae)
+                                ),
 
                                 () -> mode == Mode.Coral
-                        )
-                );
+                        );
+             
         }
 
         public Command runIntake() {
