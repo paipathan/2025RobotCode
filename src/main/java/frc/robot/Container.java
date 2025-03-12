@@ -19,6 +19,7 @@ public class Container {
         Elevator elevator;
         Vision vision;
 
+
         Mode mode;
         Elevator.Position coralLevel;
         Elevator.Position algaeLevel;
@@ -101,10 +102,10 @@ public class Container {
         public Command stow() {
                 return Commands.sequence(
                         Commands.either(
-                                arm.setPosition(Arm.Position.Hold_Algae),
                                 arm.setPosition(Arm.Position.Stow),
+                                arm.setPosition(Arm.Position.Hold_Algae),
                                 
-                                () -> arm.hasAlgae()
+                                () -> mode == Mode.Coral
                         ),
                         elevator.setPosition(Elevator.Position.Stow)
                 );

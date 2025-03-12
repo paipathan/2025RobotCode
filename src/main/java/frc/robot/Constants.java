@@ -59,7 +59,7 @@ public class Constants {
 
                 public static double maxSpeed = 4.73;
                 public static double maxAcceleration = 7.3;
-                public static double maxAngularSpeed = 540;
+                public static double maxAngularSpeed = 4.31;
                 public static double maxAngularAcceleration = 2171;
 
                 static double coupleRatio = 3.5714285714285716;
@@ -153,5 +153,13 @@ public class Constants {
                 public static Pose2d[] centerPoses = new Pose2d[] {
 
                 };
+        }
+
+        public class Climber {
+                public static int climberID = 0;
+        }
+
+        public class Led {
+                public static int ledID = 0;
         }
 }

@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.ctre.phoenix.led.CANdle;
+import com.ctre.phoenix6.Utils;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -24,14 +25,13 @@ public class Robot extends TimedRobot {
 
         StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault().
                 getStructTopic("Robot Pose", Pose2d.struct).publish();
+                
 
         public Robot() {
                 controller = new XboxController(Constants.controllerID);
                 board = new ButtonBoard(Constants.boardID);
 
                 container = new Container();
-                lights = new CANdle(Constants.lightsID);
-
                 CommandScheduler.getInstance().cancelAll();
         }
 
@@ -41,7 +41,8 @@ public class Robot extends TimedRobot {
 
                 container.getDrivetrain().updateHeight(container.getElevator().getPosition());
 
-                container.getDrivetrain().addVisionMeasurement(container.getVision().getPoseEstimate(), Timer.getFPGATimestamp());
+                if (container.getVision().seenTag()) container.getDrivetrain().addVisionMeasurement(container.getVision().getPoseEstimate(), Utils.fpgaToCurrentTime(Timer.getFPGATimestamp()));
+                // container.getDrivetrain().addVisionMeasurement(container.getVision().getQuestPose(), Utils.fpgaToCurrentTime(Timer.getFPGATimestamp()));
                 publisher.set(container.getRobotPose());
         }
 
